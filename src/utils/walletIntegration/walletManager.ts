@@ -5,6 +5,9 @@ import WalletConnect from './wallets/walletConnect';
 
 import store, { RootState } from '@/redux/store';
 import { setConnectedWallet } from '@/redux/walletSlice';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('WalletManager');
 
 class WalletManager {
 
@@ -20,9 +23,9 @@ class WalletManager {
       const walletClass = this.getWalletClassFromString(wallet);
       const response = await walletClass.connect();
       if (response) {
-        console.log("getting address...");
+        logger.debug("Getting address...");
         const address = await this.getAddress(wallet);
-        console.log({ address });
+        logger.debug("Address retrieved:", address);
         const image = this.getImage(wallet);
         const name = this.getName(wallet);
         const setConnectedWalletInfo = {
@@ -67,7 +70,7 @@ class WalletManager {
       await walletClass.addAsset(assetId, symbol, logo, fullName);
       return true;
     } catch (error: any) {
-        console.error(error)
+        logger.error('Error adding asset:', error);
     }
   }
 

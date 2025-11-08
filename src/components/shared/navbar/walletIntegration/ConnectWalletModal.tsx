@@ -15,6 +15,9 @@ import { type RootState } from '@/redux/store';
 import store from '@/redux/store';
 import WalletManager from "@/utils/walletIntegration/walletManager";
 import WalletConnect from "@/utils/walletIntegration/wallets/walletConnect";
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('ConnectWalletModal');
 
 
 
@@ -53,21 +56,21 @@ function ConnectWalletModal({ isOpen, setIsOpen }: ConnectWalletModalProps) {
             const walletConnect = new WalletConnect();
             const newSession = await walletConnect.connectSession();
             if (newSession) {
-                console.log("WC pairing successful!");
+                logger.info("WC pairing successful!");
                 // Address is already fetched in connectSession, so we can close the modal
                 setIsPairingQRModalOpen(false);
                 // Verify address was fetched
                 const state = store.getState();
                 const address = state.wallet.address;
                 if (address) {
-                    console.log("WalletConnect connected with address:", address);
+                    logger.info("WalletConnect connected with address:", address);
                     toast.success("WalletConnect connected successfully!");
                 } else {
-                    console.warn("WalletConnect connected but address not available");
+                    logger.warn("WalletConnect connected but address not available");
                 }
             }
           } catch (error: any) {
-            console.error("WalletConnect connection error:", error);
+            logger.error("WalletConnect connection error:", error);
             setIsPairingQRModalOpen(false); // Close modal on error
             if (error.message) {
               toast.error(`WalletConnect - ${error.message}`);
