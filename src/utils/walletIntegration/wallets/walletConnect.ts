@@ -125,9 +125,10 @@ class WalletConnectIntegration implements WalletIntegrationInterface {
       const signClient = await this.signClient();
         if (signClient) {
           // Use REQUIRED_NAMESPACES from constants (includes all Sage methods)
+          // Note: requiredNamespaces is deprecated, using optionalNamespaces instead
           // Fetch uri to display QR code to establish new wallet connection
           const { uri, approval } = await signClient.connect({
-            requiredNamespaces: REQUIRED_NAMESPACES,
+            optionalNamespaces: REQUIRED_NAMESPACES,
           });
 
           // Use native WalletConnect modal on desktop, custom modal on iOS

@@ -40,7 +40,7 @@ function CustomWalletConnectModal({ isOpen, onClose }: CustomWalletConnectModalP
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={handleClose}>
+      <Dialog as="div" className="relative z-50" onClose={handleClose} initialFocus={undefined}>
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -89,6 +89,13 @@ function CustomWalletConnectModal({ isOpen, onClose }: CustomWalletConnectModalP
                           Generating QR code...
                         </div>
                       </div>
+                      {/* Hidden focusable element for FocusTrap */}
+                      <button
+                        className="sr-only"
+                        tabIndex={0}
+                        aria-label="Loading"
+                        disabled
+                      />
                     </div>
                   )}
 
