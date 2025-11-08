@@ -1,6 +1,7 @@
 import type { SessionTypes } from "@walletconnect/types";
 import SignClient from "@walletconnect/sign-client";
 import Client from '@walletconnect/sign-client';
+import { WalletConnectModal } from '@walletconnect/modal';
 import { toast } from 'react-hot-toast';
 import pino from 'pino';
 
@@ -10,11 +11,16 @@ import WalletIntegrationInterface, { generateOffer } from '../walletIntegrationI
 import { setAddress, setConnectedWallet } from '@/redux/walletSlice';
 import { connectSession, setPairingUri, selectSession, setSessions, deleteTopicFromFingerprintMemory } from '@/redux/walletConnectSlice';
 import { setUserMustAddTheseAssetsToWallet, setOfferRejected, setRequestStep } from '@/redux/completeWithWalletSlice';
-import { CHIA_CHAIN_ID, REQUIRED_NAMESPACES, SIGN_CLIENT_CONFIG, DEFAULT_WALLET_IMAGE, type WalletConnectMetadata } from '@/constants/wallet-connect';
+import { CHIA_CHAIN_ID, REQUIRED_NAMESPACES, SIGN_CLIENT_CONFIG, DEFAULT_WALLET_IMAGE, type WalletConnectMetadata, getModalConfig } from '@/constants/wallet-connect';
 import { SageMethods } from '@/constants/sage-methods';
 import { createLogger } from '@/utils/logger';
+import { isIOS } from '@/utils/deviceDetection';
 
 const logger = createLogger('WalletConnect');
+
+// Singleton SignClient instance to prevent multiple initializations
+let globalSignClient: SignClient | null = null;
+let globalSignClientPromise: Promise<SignClient> | null = null;
 
 
 interface wallet {
@@ -48,6 +54,8 @@ class WalletConnectIntegration implements WalletIntegrationInterface {
   selectedFingerprint
   session: SessionTypes.Struct | undefined
   metadata?: WalletConnectMetadata
+  modal: WalletConnectModal | undefined // Native WalletConnect modal (desktop only)
+  modalThemeObserver: MutationObserver | undefined // Observer for theme changes
   
   constructor(image?: string, metadata?: WalletConnectMetadata) {
     // Allow image to be passed as prop, otherwise use default from constants
@@ -121,19 +129,33 @@ class WalletConnectIntegration implements WalletIntegrationInterface {
       const signClient = await this.signClient();
         if (signClient) {
           // Use REQUIRED_NAMESPACES from constants (includes all Sage methods)
+          // Note: requiredNamespaces is deprecated, using optionalNamespaces instead
           // Fetch uri to display QR code to establish new wallet connection
           const { uri, approval } = await signClient.connect({
-            requiredNamespaces: REQUIRED_NAMESPACES,
+            optionalNamespaces: REQUIRED_NAMESPACES,
           });
 
-          // Display QR code to user
+          // Use native WalletConnect modal on desktop, custom modal on iOS
           if (uri) {
-            store.dispatch(setPairingUri(uri))
+            if (this.modal && !isIOS()) {
+              // Use native WalletConnect modal for desktop
+              this.modal.openModal({ uri });
+              logger.debug('Opened native WalletConnect modal');
+            } else {
+              // Use custom modal for iOS or fallback
+              store.dispatch(setPairingUri(uri));
+            }
           }
 
           // If new connection established successfully
           const session = await approval();
           logger.info('Connected Chia wallet via WalletConnect', { session, signClient });
+          
+          // Close native modal if it was opened
+          if (this.modal && !isIOS()) {
+            this.modal.closeModal();
+          }
+          
           store.dispatch(setPairingUri(null));
           this.detectEvents()
 
@@ -185,6 +207,12 @@ class WalletConnectIntegration implements WalletIntegrationInterface {
         }
     } catch (error) {
       logger.error('Error connecting WalletConnect session:', error);
+      
+      // Close native modal if it was opened
+      if (this.modal && !isIOS()) {
+        this.modal.closeModal();
+      }
+      
       // Clear pairing URI on error
       store.dispatch(setPairingUri(null));
       // Re-throw error so calling code can handle it
@@ -682,9 +710,70 @@ class WalletConnectIntegration implements WalletIntegrationInterface {
     if (signClient) return signClient.session.getAll();
   }
 
+  /**
+   * Set up a MutationObserver to watch for theme changes (dark class on documentElement)
+   * and update the WalletConnect modal theme accordingly
+   */
+  setupThemeObserver() {
+    if (typeof window === 'undefined' || !this.modal) {
+      return;
+    }
+
+    // Clean up existing observer if any
+    if (this.modalThemeObserver) {
+      this.modalThemeObserver.disconnect();
+    }
+
+    // Create observer to watch for class changes on documentElement
+    this.modalThemeObserver = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          const isDark = document.documentElement.classList.contains('dark');
+          const newTheme = isDark ? 'dark' : 'light';
+          
+          try {
+            // Update modal theme
+            // Note: WalletConnectModal may need to be re-initialized or have a setTheme method
+            // For now, we'll log the change - the modal should pick up theme changes on next open
+            logger.debug('Theme changed, updating WalletConnect modal', { theme: newTheme });
+            
+            // If the modal has a method to update theme, use it
+            // Otherwise, the theme will be applied on next modal open
+            if (this.modal && typeof (this.modal as any).setTheme === 'function') {
+              (this.modal as any).setTheme(newTheme);
+            }
+          } catch (error) {
+            logger.error('Failed to update modal theme:', error);
+          }
+        }
+      });
+    });
+
+    // Start observing the documentElement for class changes
+    this.modalThemeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+
+    logger.debug('Theme observer set up for WalletConnect modal');
+  }
+
   async signClient(): Promise<void | Client> {
     // If client has been saved to object, return that instead of completing a new sign
     if (this.client) return this.client;
+
+    // Use global singleton to prevent multiple initializations
+    if (globalSignClient) {
+      this.client = globalSignClient;
+      return globalSignClient;
+    }
+
+    // If initialization is in progress, wait for it
+    if (globalSignClientPromise) {
+      const client = await globalSignClientPromise;
+      this.client = client;
+      return client;
+    }
 
     try {
       const projectId = SIGN_CLIENT_CONFIG.projectId;
@@ -792,11 +881,43 @@ class WalletConnectIntegration implements WalletIntegrationInterface {
         initOptions.relayUrl = SIGN_CLIENT_CONFIG.relayUrl;
       }
 
-      const client = await SignClient.init(initOptions);
-      this.client = client;
-      return client;
+      // Create initialization promise to prevent concurrent initializations
+      globalSignClientPromise = SignClient.init(initOptions).then((signClient) => {
+        globalSignClient = signClient;
+        this.client = signClient;
+        globalSignClientPromise = null;
+        return signClient;
+      });
+
+      const signClient = await globalSignClientPromise;
+      
+      // Initialize native WalletConnect modal for desktop (not iOS)
+      // iOS uses custom modal with better clipboard support
+      // Only initialize modal once per instance
+      if (!this.modal && !isIOS() && typeof window !== 'undefined') {
+        const modalConfig = getModalConfig();
+        if (modalConfig) {
+          try {
+            this.modal = new WalletConnectModal(modalConfig);
+            logger.debug('Native WalletConnect modal initialized for desktop', { theme: modalConfig.themeMode });
+            
+            // Set up theme observer to update modal when theme changes
+            this.setupThemeObserver();
+          } catch (modalError) {
+            logger.error('Failed to initialize WalletConnect modal:', modalError);
+            // Continue without modal - fallback to custom implementation
+          }
+        } else {
+          logger.warn('WalletConnect modal not initialized: projectId is required');
+        }
+      }
+      
+      return signClient;
     } catch (e) {
+      // Clear the promise on error so retry is possible
+      globalSignClientPromise = null;
       toast.error(`Wallet - ${e}`)
+      throw e; // Re-throw to allow calling code to handle the error
     }
   }
 
