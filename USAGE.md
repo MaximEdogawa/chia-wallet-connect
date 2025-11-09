@@ -7,14 +7,110 @@
 ```bash
 npm install @chia/wallet-connect
 ```
-### 2. Setup Redux Provider
+### 2. Import Styles
+
+```tsx
+// _app.tsx or App.tsx
+import '@chia/wallet-connect/styles';
+```
+
+### 3. Configure Tailwind CSS (Required if using Tailwind)
+
+**Quick Setup (Recommended):**
+
+```js
+// tailwind.config.js
+const packageConfig = require('@chia/wallet-connect/tailwind.config');
+
+module.exports = {
+  ...packageConfig,
+  content: [
+    './src/**/*.{js,ts,jsx,tsx}',
+    './pages/**/*.{js,ts,jsx,tsx}',
+    './app/**/*.{js,ts,jsx,tsx}',
+    './components/**/*.{js,ts,jsx,tsx}',
+    './node_modules/@chia/wallet-connect/dist/**/*.{js,ts,jsx,tsx}', // Required!
+  ],
+}
+```
+
+**Manual Setup:**
+
+```js
+// tailwind.config.js
+module.exports = {
+  darkMode: 'class',
+  content: [
+    './src/**/*.{js,ts,jsx,tsx}',
+    './pages/**/*.{js,ts,jsx,tsx}',
+    './node_modules/@chia/wallet-connect/dist/**/*.{js,ts,jsx,tsx}', // Required!
+  ],
+  theme: {
+    extend: {
+      colors: {
+        brandDark: '#526e78',
+        brandLight: '#EFF4F7',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: 0 },
+          '100%': { opacity: 1 }
+        }
+      },
+      animation: {
+        fadeIn: 'fadeIn .3s ease-in-out',
+      },
+    },
+  },
+}
+```
+
+### 4. Dark Mode Support (Optional)
+
+The package fully supports dark mode! Components automatically adapt when the `dark` class is on the `<html>` element.
+
+**Quick Setup:**
+
+```tsx
+// In your _app.tsx or layout component
+import { useEffect } from 'react';
+
+export default function App({ Component, pageProps }) {
+  useEffect(() => {
+    // Check for saved theme preference or default to system preference
+    const stored = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    if (stored === 'dark' || (!stored && prefersDark)) {
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
+
+  return <Component {...pageProps} />;
+}
+```
+
+**Toggle Dark Mode:**
+
+```tsx
+// Simple toggle function
+const toggleDarkMode = () => {
+  document.documentElement.classList.toggle('dark');
+  localStorage.setItem('theme', 
+    document.documentElement.classList.contains('dark') ? 'dark' : 'light'
+  );
+};
+```
+
+All components (`ConnectButton`, `Modal`, `ConnectWalletModal`, etc.) automatically support dark mode - no additional configuration needed!
+
+### 5. Setup Redux Provider
 
 ```tsx
 // _app.tsx or App.tsx
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from '@chia/wallet-connect';
-import '@chia/wallet-connect/styles';
 
 export default function App({ Component, pageProps }) {
   return (
@@ -27,7 +123,7 @@ export default function App({ Component, pageProps }) {
 }
 ```
 
-### 3. Use Components
+### 6. Use Components
 
 ```tsx
 import { ConnectButton } from '@chia/wallet-connect';

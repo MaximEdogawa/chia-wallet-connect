@@ -11,7 +11,7 @@ A WalletConnect integration plugin for the Chia blockchain. This plugin provides
 - **Address Management**: Get and display wallet addresses
 - **Asset Management**: Add CAT tokens to connected wallets
 - **Offer Generation**: Generate offers for Chia transactions
-- **Dark Mode Support**: Built-in theme support
+- **Dark Mode Support**: Full dark/light mode support - all components automatically adapt to theme changes
 
 ## Getting Started
 
@@ -96,11 +96,148 @@ yarn add @chia/wallet-connect
 pnpm add @chia/wallet-connect
 ```
 
-### Basic Usage
+### Setup
 
-#### 1. Setup Redux Provider
+#### 1. Import Styles
 
-Wrap your app with the Redux Provider and PersistGate:
+**Important**: You must import the package styles in your app's main entry point:
+
+```tsx
+// In your _app.tsx, layout.tsx, or main.tsx
+import '@chia/wallet-connect/styles';
+```
+
+#### 2. Configure Tailwind CSS (if using Tailwind)
+
+**Option A: Merge the package's Tailwind config (Recommended)**
+
+Import and merge the package's Tailwind configuration to ensure all styles and theme extensions are included:
+
+```js
+// tailwind.config.js
+const packageConfig = require('@chia/wallet-connect/tailwind.config');
+
+module.exports = {
+  ...packageConfig,
+  content: [
+    './src/**/*.{js,ts,jsx,tsx}',
+    './pages/**/*.{js,ts,jsx,tsx}',
+    './app/**/*.{js,ts,jsx,tsx}',
+    './components/**/*.{js,ts,jsx,tsx}',
+    './node_modules/@chia/wallet-connect/dist/**/*.{js,ts,jsx,tsx}', // Important: Add this
+  ],
+  // You can extend the theme further if needed
+  theme: {
+    ...packageConfig.theme,
+    extend: {
+      ...packageConfig.theme.extend,
+      // Your custom extensions
+    },
+  },
+}
+```
+
+**Option B: Manual configuration**
+
+If you prefer not to merge the config, manually add the package to your Tailwind content paths and include the theme extensions:
+
+```js
+// tailwind.config.js
+module.exports = {
+  darkMode: 'class', // Required for dark mode support
+  content: [
+    './src/**/*.{js,ts,jsx,tsx}',
+    './pages/**/*.{js,ts,jsx,tsx}',
+    './app/**/*.{js,ts,jsx,tsx}',
+    './components/**/*.{js,ts,jsx,tsx}',
+    './node_modules/@chia/wallet-connect/dist/**/*.{js,ts,jsx,tsx}', // Important: Add this
+  ],
+  theme: {
+    extend: {
+      colors: {
+        brandDark: '#526e78',
+        brandLight: '#EFF4F7',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: 0 },
+          '100%': { opacity: 1 }
+        }
+      },
+      animation: {
+        fadeIn: 'fadeIn .3s ease-in-out',
+      },
+    },
+  },
+  plugins: [],
+}
+```
+
+**Important Notes:**
+- The `content` array **must** include the package's dist files so Tailwind can scan for class names
+- The `darkMode: 'class'` setting is required for proper dark mode support
+- Make sure your PostCSS config includes Tailwind and Autoprefixer
+
+#### 3. Dark Mode Support
+
+The package includes full dark mode support out of the box. Components automatically adapt to dark mode when the `dark` class is present on the `<html>` or `<body>` element.
+
+**Enable Dark Mode:**
+
+```tsx
+// Toggle dark mode by adding/removing the 'dark' class
+// Option 1: Manual toggle
+const toggleDarkMode = () => {
+  document.documentElement.classList.toggle('dark');
+  localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+};
+
+// Option 2: React hook example
+import { useEffect, useState } from 'react';
+
+function useDarkMode() {
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    // Check localStorage or system preference
+    const stored = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const shouldBeDark = stored === 'dark' || (!stored && prefersDark);
+    
+    setIsDark(shouldBeDark);
+    if (shouldBeDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
+  const toggle = () => {
+    const newValue = !isDark;
+    setIsDark(newValue);
+    if (newValue) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  };
+
+  return [isDark, toggle] as const;
+}
+```
+
+**All components automatically support dark mode:**
+- `ConnectButton` - Adapts colors for dark/light themes
+- `ConnectWalletModal` - Full dark mode styling
+- `Modal` - Dark background and text colors
+- `WalletConnectQR` - Dark mode compatible QR display
+- All other components - Fully theme-aware
+
+#### 4. Setup Redux Provider
+
+Wrap your app with the Redux Provider:
 
 ```tsx
 import { Provider } from 'react-redux';
@@ -111,14 +248,16 @@ function App() {
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
-        {/* Your app components */}
+        {/* Your app */}
       </PersistGate>
     </Provider>
   );
 }
 ```
 
-#### 2. Use the Connect Button
+### Basic Usage
+
+#### Use the Connect Button
 
 ```tsx
 import { ConnectButton } from '@chia/wallet-connect';
@@ -232,9 +371,12 @@ NEXT_PUBLIC_CHIA_NETWORK=testnet
 
 ### Styling
 
-Import the styles in your app:
+#### Import Styles
+
+Import the package styles in your app's main entry point:
 
 ```tsx
+// In your _app.tsx, layout.tsx, or main.tsx
 import '@chia/wallet-connect/styles';
 ```
 
@@ -243,6 +385,40 @@ Or if using CSS modules:
 ```css
 @import '@chia/wallet-connect/styles';
 ```
+
+#### Troubleshooting Styling Issues
+
+If styles are not appearing correctly:
+
+1. **Verify CSS import**: Make sure you've imported the styles in your main entry point
+2. **Check Tailwind content paths**: Ensure your `tailwind.config.js` includes the package's dist files:
+   ```js
+   content: [
+     // ... your paths
+     './node_modules/@chia/wallet-connect/dist/**/*.{js,ts,jsx,tsx}',
+   ]
+   ```
+3. **Verify PostCSS config**: Ensure your `postcss.config.js` includes Tailwind:
+   ```js
+   module.exports = {
+     plugins: {
+       tailwindcss: {},
+       autoprefixer: {},
+     },
+   }
+   ```
+4. **Rebuild Tailwind**: After updating your config, restart your dev server and rebuild
+5. **Check dark mode**: If using dark mode, ensure `darkMode: 'class'` is set in your Tailwind config and the `dark` class is on your `<html>` element
+6. **Merge package config**: Use Option A in the setup section to automatically include all required theme extensions
+
+#### Dark Mode Troubleshooting
+
+If dark mode isn't working:
+
+1. **Verify `dark` class**: Check that `document.documentElement.classList.contains('dark')` returns `true` when dark mode should be active
+2. **Check Tailwind config**: Ensure `darkMode: 'class'` is set in your Tailwind config (included when merging package config)
+3. **Inspect components**: Use browser dev tools to verify `dark:` classes are being applied
+4. **Clear cache**: Sometimes Tailwind needs a rebuild to recognize dark mode classes
 
 ## Supported Wallets
 
