@@ -18,4 +18,11 @@ const Home: React.FC = () => {
   );
 };
 
+// Use getStaticProps to enable static generation for index page only
+export async function getStaticProps() {
+  return {
+    props: {},
+  };
+}
+
 export default Home;
