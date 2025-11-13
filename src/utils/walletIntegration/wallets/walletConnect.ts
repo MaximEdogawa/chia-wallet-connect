@@ -9,7 +9,7 @@ import WalletIntegrationInterface, { generateOffer } from '../walletIntegrationI
 
 import store from '@/state/store.js';
 import { setAddress, setConnectedWallet } from '@/state/walletSlice.js';
-import { connectSession, setPairingUri, selectSession, setSessions, deleteTopicFromFingerprintMemory } from '@/state/walletConnectSlice.js';
+import { connectSession, setPairingUri, selectSession, setSessions, deleteTopicFromFingerprintMemory, setSelectedFingerprint } from '@/state/walletConnectSlice.js';
 import { setUserMustAddTheseAssetsToWallet, setOfferRejected, setRequestStep } from '@/state/completeWithWalletSlice.js';
 import { CHIA_CHAIN_ID, REQUIRED_NAMESPACES, SIGN_CLIENT_CONFIG, DEFAULT_WALLET_IMAGE, type WalletConnectMetadata, getModalConfig } from '@/constants/wallet-connect.js';
 import { SageMethods } from '@/constants/sage-methods.js';
@@ -143,7 +143,42 @@ class WalletConnectIntegration implements WalletIntegrationInterface {
   }
 
   async connect(): Promise<boolean> {
-    return true;
+    // For WalletConnect, check if there are existing sessions
+    // If there are sessions but no selected session, select the first one
+    const state = store.getState();
+    const sessions = state.walletConnect.sessions;
+    const selectedSession = state.walletConnect.selectedSession;
+    
+    if (sessions.length > 0 && !selectedSession) {
+      // Select the first available session
+      const firstSession = sessions[0];
+      store.dispatch(selectSession(firstSession.topic));
+      
+      // Ensure fingerprint is set for this session
+      if (!state.walletConnect.selectedFingerprint[firstSession.topic]) {
+        const defaultFingerprint = Number(firstSession.namespaces.chia.accounts[0].split(":")[2]);
+        store.dispatch(setSelectedFingerprint({ topic: firstSession.topic, selectedFingerprint: defaultFingerprint }));
+        logger.debug('connect: Set default fingerprint for session', { topic: firstSession.topic, fingerprint: defaultFingerprint });
+      }
+      
+      logger.debug('connect: Selected first available session', { topic: firstSession.topic });
+      return true;
+    }
+    
+    // If there's already a selected session, ensure it has a fingerprint
+    if (selectedSession) {
+      if (!state.walletConnect.selectedFingerprint[selectedSession.topic]) {
+        const defaultFingerprint = Number(selectedSession.namespaces.chia.accounts[0].split(":")[2]);
+        store.dispatch(setSelectedFingerprint({ topic: selectedSession.topic, selectedFingerprint: defaultFingerprint }));
+        logger.debug('connect: Set default fingerprint for existing session', { topic: selectedSession.topic, fingerprint: defaultFingerprint });
+      }
+      logger.debug('connect: Session already selected', { topic: selectedSession.topic });
+      return true;
+    }
+    
+    // No sessions available - user needs to call connectSession() first
+    logger.debug('connect: No sessions available, connectSession() must be called first');
+    return false;
   }
 
   async connectSession(): Promise<void | SessionTypes.Struct> {  

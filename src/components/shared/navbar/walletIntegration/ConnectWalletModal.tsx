@@ -1,6 +1,6 @@
 import type { SessionTypes } from "@walletconnect/types";
 import { Transition } from '@headlessui/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import toast from "react-hot-toast";
 
@@ -42,14 +42,19 @@ function ConnectWalletModal({ isOpen, setIsOpen, walletConnectIcon, walletConnec
     const [isPairingQRModalOpen, setIsPairingQRModalOpen] = useState(false);
     
     const walletManager = new WalletManager(walletConnectIcon, walletConnectMetadata);
-    const walletConnectActive = connectedWallet === "WalletConnect" && walletConnectSelectedSession;
+    // Compute walletConnectActive reactively using useMemo
+    const walletConnectActive = useMemo(() => {
+        return connectedWallet === "WalletConnect" && Boolean(walletConnectSelectedSession);
+    }, [connectedWallet, walletConnectSelectedSession]);
     const isIOSDevice = isIOS();
 
-    // Hydrate UI with WC sessions
+    // Hydrate UI with WC sessions on mount, when modal opens, and when connection state changes
     useEffect(() => {
-        const walletConnect = new WalletConnect(walletConnectIcon, walletConnectMetadata);
-        walletConnect.updateSessions();
-    }, [walletConnectIcon, walletConnectMetadata])
+        if (isOpen) {
+            const walletConnect = new WalletConnect(walletConnectIcon, walletConnectMetadata);
+            walletConnect.updateSessions();
+        }
+    }, [isOpen, walletConnectIcon, walletConnectMetadata, connectedWallet, walletConnectSelectedSession])
 
     // Close pairing modal when pairingUri is cleared (connection successful)
     useEffect(() => {
@@ -67,6 +72,8 @@ function ConnectWalletModal({ isOpen, setIsOpen, walletConnectIcon, walletConnec
             const newSession = await walletConnect.connectSession();
             if (newSession) {
                 logger.info("WC pairing successful!");
+                // Refresh sessions to ensure UI is up to date
+                await walletConnect.updateSessions();
                 // Address is already fetched in connectSession, so we can close the modal
                 setIsPairingQRModalOpen(false);
                 // Verify address was fetched
