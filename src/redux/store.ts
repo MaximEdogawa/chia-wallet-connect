@@ -10,7 +10,24 @@ import {
   PURGE,
   REGISTER,
 } from "redux-persist";
-import storage from 'redux-persist/lib/storage';
+// Use conditional storage for SSR compatibility
+let storage: any;
+if (typeof window !== 'undefined') {
+  storage = require('redux-persist/lib/storage').default;
+} else {
+  // Create a noop storage for SSR
+  storage = {
+    getItem(_key: string) {
+      return Promise.resolve(null);
+    },
+    setItem(_key: string, value: any) {
+      return Promise.resolve(value);
+    },
+    removeItem(_key: string) {
+      return Promise.resolve();
+    },
+  };
+}
 
 import completeWithWalletReducer from './completeWithWalletSlice';
 import globalOnLoadDataReducer from './globalOnLoadDataSlice';
