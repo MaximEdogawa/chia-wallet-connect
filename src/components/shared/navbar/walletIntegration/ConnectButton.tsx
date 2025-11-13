@@ -8,9 +8,9 @@ import ConnectWalletModal from './ConnectWalletModal';
 
 
 import { getCNSNameApiCall } from '@/api';
-import { selectSession } from '@/redux/walletConnectSlice';
-import { setCNSName } from '@/redux/walletSlice';
-import { RootState } from '@/redux/store';
+import { selectSession } from '@/state/walletConnectSlice';
+import { setCNSName } from '@/state/walletSlice';
+import { RootState } from '@/state/store';
 import { useAppDispatch } from '@/hooks';
 import { createLogger } from '@/utils/logger';
 import { type WalletConnectMetadata } from '@/constants/wallet-connect';

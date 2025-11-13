@@ -1,13 +1,12 @@
 {
-  "name": "@chia/wallet-connect",
-  "version": "0.1.0",
+  "name": "@maximEdogawa/chia-wallet-connect-react",
+  "version": "0.0.1",
   "description": "WalletConnect plugin for Chia blockchain",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
-    "src/styles",
     "tailwind.config.js",
     "README.md",
     "LICENSE",
@@ -19,15 +18,14 @@
       "require": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
-    "./styles": "./src/styles/globals.css",
+    "./styles": "./dist/styles/globals.css",
     "./tailwind.config": "./tailwind.config.js"
   },
   "scripts": {
-    "build:package": "tsc -p tsconfig.build.json && npx tsc-alias -p tsconfig.build.json",
+    "prepare": "tsc -p tsconfig.build.json",
     "lint": "eslint . --max-warnings 20",
     "lint:fix": "eslint . --fix",
-    "prepublishOnly": "npm run build:package",
-    "prepare": "husky"
+    "prehook": "husky"
   },
   "keywords": [
     "chia",

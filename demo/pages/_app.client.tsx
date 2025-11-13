@@ -2,14 +2,10 @@ import { useState, useEffect } from 'react';
 import type { AppProps } from 'next/app';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
-import dynamic from 'next/dynamic';
 import { Toaster } from 'react-hot-toast';
-import store, { persistor } from '../../src/redux/store';
-import WalletManager from '../../src/utils/walletIntegration/walletManager';
-
-const Navbar = dynamic(() => import('../../src/components/shared/navbar/Navbar'), {
-  ssr: false,
-});
+import store, { persistor } from '../../dist/state/store';
+import WalletManager from '@maximEdogawa/chia-wallet-connect-react/utils/walletIntegration/walletManager';
+import Navbar from '@maximEdogawa/chia-wallet-connect-react/components/shared/navbar/Navbar';
 
 export default function ClientApp({ Component, pageProps }: AppProps) {
   const [theme, setTheme] = useState<"dark" | "light" | "auto">("auto");

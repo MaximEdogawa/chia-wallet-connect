@@ -11,15 +11,15 @@ import Modal from '../../Modal';
 import WalletConnectSession from './WalletConnectSession';
 import CustomWalletConnectModal from './CustomWalletConnectModal';
 
-import { type RootState } from '@/redux/store';
-import store from '@/redux/store';
+import { type RootState } from '@/state/store';
+import store from '@/state/store';
 import WalletManager from "@/utils/walletIntegration/walletManager";
 import WalletConnect from "@/utils/walletIntegration/wallets/walletConnect";
 import { createLogger } from '@/utils/logger';
 import { type WalletConnectMetadata } from '@/constants/wallet-connect';
 import { isIOS } from '@/utils/deviceDetection';
 import { useAppDispatch } from '@/hooks';
-import { setPairingUri } from '@/redux/walletConnectSlice';
+import { setPairingUri } from '@/state/walletConnectSlice';
 
 const logger = createLogger('ConnectWalletModal');
 

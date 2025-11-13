@@ -6,8 +6,8 @@ import CrossIcon from '../../icons/CrossIcon';
 
 import FingerprintListbox from './FingerprintListbox';
 
-import { selectSession, setSelectedFingerprint } from '@/redux/walletConnectSlice';
-import { type RootState } from '@/redux/store';
+import { selectSession, setSelectedFingerprint } from '@/state/walletConnectSlice';
+import { type RootState } from '@/state/store';
 import WalletManager from '@/utils/walletIntegration/walletManager';
 import { useAppDispatch } from '@/hooks';
 import WalletConnect from "@/utils/walletIntegration/wallets/walletConnect";

@@ -3,8 +3,8 @@ import toast from 'react-hot-toast';
 import { generateOffer, walletNamesType } from './walletIntegrationInterface';
 import WalletConnect from './wallets/walletConnect';
 
-import store, { RootState } from '@/redux/store';
-import { setConnectedWallet } from '@/redux/walletSlice';
+import store, { RootState } from '@/state/store';
+import { setConnectedWallet } from '@/state/walletSlice';
 import { createLogger } from '@/utils/logger';
 import { type WalletConnectMetadata } from '@/constants/wallet-connect';
 

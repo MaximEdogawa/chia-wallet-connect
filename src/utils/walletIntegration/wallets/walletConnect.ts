@@ -5,12 +5,12 @@ import { WalletConnectModal } from '@walletconnect/modal';
 import { toast } from 'react-hot-toast';
 import pino from 'pino';
 
-import store from '../../../redux/store';
+import store from '../../../state/store';
 import WalletIntegrationInterface, { generateOffer } from '../walletIntegrationInterface';
 
-import { setAddress, setConnectedWallet } from '@/redux/walletSlice';
-import { connectSession, setPairingUri, selectSession, setSessions, deleteTopicFromFingerprintMemory } from '@/redux/walletConnectSlice';
-import { setUserMustAddTheseAssetsToWallet, setOfferRejected, setRequestStep } from '@/redux/completeWithWalletSlice';
+import { setAddress, setConnectedWallet } from '@/state/walletSlice';
+import { connectSession, setPairingUri, selectSession, setSessions, deleteTopicFromFingerprintMemory } from '@/state/walletConnectSlice';
+import { setUserMustAddTheseAssetsToWallet, setOfferRejected, setRequestStep } from '@/state/completeWithWalletSlice';
 import { CHIA_CHAIN_ID, REQUIRED_NAMESPACES, SIGN_CLIENT_CONFIG, DEFAULT_WALLET_IMAGE, type WalletConnectMetadata, getModalConfig } from '@/constants/wallet-connect';
 import { SageMethods } from '@/constants/sage-methods';
 import { createLogger } from '@/utils/logger';
