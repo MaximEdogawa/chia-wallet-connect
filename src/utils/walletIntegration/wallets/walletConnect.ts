@@ -5,16 +5,16 @@ import { WalletConnectModal } from '@walletconnect/modal';
 import { toast } from 'react-hot-toast';
 import pino from 'pino';
 
-import store from '../../../state/store';
-import WalletIntegrationInterface, { generateOffer } from '../walletIntegrationInterface';
+import WalletIntegrationInterface, { generateOffer } from '../walletIntegrationInterface.js';
 
-import { setAddress, setConnectedWallet } from '@/state/walletSlice';
-import { connectSession, setPairingUri, selectSession, setSessions, deleteTopicFromFingerprintMemory } from '@/state/walletConnectSlice';
-import { setUserMustAddTheseAssetsToWallet, setOfferRejected, setRequestStep } from '@/state/completeWithWalletSlice';
-import { CHIA_CHAIN_ID, REQUIRED_NAMESPACES, SIGN_CLIENT_CONFIG, DEFAULT_WALLET_IMAGE, type WalletConnectMetadata, getModalConfig } from '@/constants/wallet-connect';
-import { SageMethods } from '@/constants/sage-methods';
-import { createLogger } from '@/utils/logger';
-import { isIOS } from '@/utils/deviceDetection';
+import store from '@/state/store.js';
+import { setAddress, setConnectedWallet } from '@/state/walletSlice.js';
+import { connectSession, setPairingUri, selectSession, setSessions, deleteTopicFromFingerprintMemory } from '@/state/walletConnectSlice.js';
+import { setUserMustAddTheseAssetsToWallet, setOfferRejected, setRequestStep } from '@/state/completeWithWalletSlice.js';
+import { CHIA_CHAIN_ID, REQUIRED_NAMESPACES, SIGN_CLIENT_CONFIG, DEFAULT_WALLET_IMAGE, type WalletConnectMetadata, getModalConfig } from '@/constants/wallet-connect.js';
+import { SageMethods } from '@/constants/sage-methods.js';
+import { createLogger } from '@/utils/logger.js';
+import { isIOS } from '@/utils/deviceDetection.js';
 
 const logger = createLogger('WalletConnect');
 

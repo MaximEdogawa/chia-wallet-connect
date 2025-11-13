@@ -10,10 +10,33 @@ import {
   PURGE,
   REGISTER,
 } from "redux-persist";
+
+import completeWithWalletReducer from './completeWithWalletSlice.js';
+import globalOnLoadDataReducer from './globalOnLoadDataSlice.js';
+import walletConnectReducer from './walletConnectSlice.js';
+import settingsModalReducer from './settingsModalSlice.js';
+import walletReducer from './walletSlice.js';
+
 // Use conditional storage for SSR compatibility
+// For ESM, we use a synchronous import pattern that works in both browser and SSR
 let storage: any;
 if (typeof window !== 'undefined') {
-  storage = require('redux-persist/lib/storage').default;
+  // In browser, use dynamic import (will be handled at runtime)
+  import('redux-persist/lib/storage').then((module) => {
+    storage = module.default;
+  });
+  // Fallback: create temporary storage until import completes
+  storage = {
+    getItem(_key: string) {
+      return Promise.resolve(null);
+    },
+    setItem(_key: string, value: any) {
+      return Promise.resolve(value);
+    },
+    removeItem(_key: string) {
+      return Promise.resolve();
+    },
+  };
 } else {
   // Create a noop storage for SSR
   storage = {
@@ -28,12 +51,6 @@ if (typeof window !== 'undefined') {
     },
   };
 }
-
-import completeWithWalletReducer from './completeWithWalletSlice';
-import globalOnLoadDataReducer from './globalOnLoadDataSlice';
-import walletConnectReducer from './walletConnectSlice';
-import settingsModalReducer from './settingsModalSlice';
-import walletReducer from './walletSlice';
 
 const rootReducer = combineReducers({
   completeWithWallet: completeWithWalletReducer,
