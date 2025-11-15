@@ -7,7 +7,7 @@ This package provides several ways for your app to access and monitor the Wallet
 The easiest way to access connection state in your React components is using the `useWalletConnectionState` hook:
 
 ```tsx
-import { useWalletConnectionState } from '@chia/wallet-connect';
+import { useWalletConnectionState } from "@chia/wallet-connect-react";
 
 function MyComponent() {
   const {
@@ -18,7 +18,7 @@ function MyComponent() {
     walletConnectSession,
     walletImage,
     walletName,
-    cnsName
+    cnsName,
   } = useWalletConnectionState();
 
   if (!isConnected) {
@@ -53,28 +53,36 @@ function MyComponent() {
 You can also access the state directly from the Redux store:
 
 ```tsx
-import { store } from '@chia/wallet-connect';
-import { useSelector } from 'react-redux';
-import type { RootState } from '@chia/wallet-connect';
+import { store } from "@chia/wallet-connect";
+import { useSelector } from "react-redux";
+import type { RootState } from "@chia/wallet-connect";
 
 function MyComponent() {
   // Using useSelector hook
-  const connectedWallet = useSelector((state: RootState) => state.wallet.connectedWallet);
+  const connectedWallet = useSelector(
+    (state: RootState) => state.wallet.connectedWallet
+  );
   const address = useSelector((state: RootState) => state.wallet.address);
-  const walletConnectSession = useSelector((state: RootState) => state.walletConnect.selectedSession);
-  const walletConnectSessions = useSelector((state: RootState) => state.walletConnect.sessions);
+  const walletConnectSession = useSelector(
+    (state: RootState) => state.walletConnect.selectedSession
+  );
+  const walletConnectSessions = useSelector(
+    (state: RootState) => state.walletConnect.sessions
+  );
 
   // Or access store directly (outside React components)
   const state = store.getState();
-  const isConnected = state.wallet.connectedWallet === "WalletConnect" 
-    ? Boolean(state.walletConnect.selectedSession)
-    : Boolean(state.wallet.connectedWallet);
+  const isConnected =
+    state.wallet.connectedWallet === "WalletConnect"
+      ? Boolean(state.walletConnect.selectedSession)
+      : Boolean(state.wallet.connectedWallet);
 }
 ```
 
 ### Redux State Structure
 
 #### `state.wallet`
+
 - `connectedWallet: string | null` - Connected wallet name
 - `address: string | null` - Wallet address
 - `image: string | null` - Wallet image URL
@@ -82,6 +90,7 @@ function MyComponent() {
 - `CNSName: string | null` - CNS name
 
 #### `state.walletConnect`
+
 - `sessions: SessionTypes.Struct[]` - All WalletConnect sessions
 - `selectedSession: SessionTypes.Struct | null` - Currently selected/active session
 - `selectedFingerprint: { [topic: string]: number }` - Fingerprint for each session
@@ -92,10 +101,11 @@ function MyComponent() {
 ### For WalletConnect specifically:
 
 ```tsx
-import { useWalletConnectionState } from '@chia/wallet-connect';
+import { useWalletConnectionState } from "@chia/wallet-connect";
 
 function MyComponent() {
-  const { isConnected, isWalletConnect, walletConnectSession } = useWalletConnectionState();
+  const { isConnected, isWalletConnect, walletConnectSession } =
+    useWalletConnectionState();
 
   // Check if WalletConnect is connected
   if (isWalletConnect && walletConnectSession) {
@@ -110,15 +120,19 @@ function MyComponent() {
 ### For any wallet:
 
 ```tsx
-import { useWalletConnectionState } from '@chia/wallet-connect';
+import { useWalletConnectionState } from "@chia/wallet-connect";
 
 function MyComponent() {
   const { isConnected, connectedWallet, address } = useWalletConnectionState();
 
   if (isConnected) {
-    return <div>Connected to {connectedWallet} at {address}</div>;
+    return (
+      <div>
+        Connected to {connectedWallet} at {address}
+      </div>
+    );
   }
-  
+
   return <div>Not connected</div>;
 }
 ```
@@ -132,14 +146,15 @@ The connection state is automatically persisted to IndexedDB using `redux-persis
 - No additional setup required
 
 The following state is persisted:
+
 - `wallet` slice (connectedWallet, address, image, name)
 - `walletConnect` slice (sessions, selectedSession, selectedFingerprint)
 
 ## Example: Complete Component
 
 ```tsx
-import { useWalletConnectionState } from '@chia/wallet-connect';
-import { ConnectButton } from '@chia/wallet-connect';
+import { useWalletConnectionState } from "@chia/wallet-connect";
+import { ConnectButton } from "@chia/wallet-connect";
 
 function WalletStatus() {
   const {
@@ -148,25 +163,25 @@ function WalletStatus() {
     address,
     isWalletConnect,
     walletConnectSession,
-    walletImage
+    walletImage,
   } = useWalletConnectionState();
 
   return (
     <div>
       <ConnectButton />
-      
+
       {isConnected && (
         <div>
           <h3>Wallet Status</h3>
           <p>Connected: {connectedWallet}</p>
           <p>Address: {address}</p>
-          
+
           {isWalletConnect && walletConnectSession && (
             <div>
               <p>Wallet: {walletConnectSession.peer.metadata.name}</p>
-              <img 
-                src={walletConnectSession.peer.metadata.icons[0]} 
-                alt="Wallet icon" 
+              <img
+                src={walletConnectSession.peer.metadata.icons[0]}
+                alt="Wallet icon"
               />
             </div>
           )}
@@ -182,10 +197,7 @@ function WalletStatus() {
 All types are exported from the package:
 
 ```tsx
-import type { 
-  RootState, 
-  SessionTypes 
-} from '@chia/wallet-connect';
+import type { RootState, SessionTypes } from "@chia/wallet-connect";
 ```
 
 ## Notes
@@ -194,4 +206,3 @@ import type {
 - For WalletConnect, both `connectedWallet === "WalletConnect"` AND `selectedSession` must be truthy for the connection to be considered active
 - The connection state is restored automatically after page refresh - no manual restoration needed
 - Address may be `null` initially if it hasn't been fetched yet, but the connection is still valid
-

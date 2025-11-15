@@ -17,8 +17,8 @@ A WalletConnect integration plugin for the Chia blockchain. This plugin provides
 
 ### Prerequisites
 
-- Node.js 18+ 
-- npm, yarn, or pnpm
+- Node.js 18+ or Bun 1.0+
+- npm, yarn, pnpm, or bun
 
 ### Installation
 
@@ -28,7 +28,29 @@ npm install
 yarn install
 # or
 pnpm install
+# or
+bun install
 ```
+
+### Build Package
+
+Build the package for distribution (required before using in other projects):
+
+```bash
+npm run build
+# or
+yarn build
+# or
+pnpm build
+# or
+bun run build
+```
+
+This will:
+- Compile TypeScript to JavaScript
+- Generate type definitions (.d.ts files)
+- Copy styles to the dist directory
+- Prepare the package for publishing or local use
 
 ### Environment Variables
 
@@ -56,20 +78,25 @@ npm run dev
 yarn dev
 # or
 pnpm dev
+# or
+bun run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-### Build
+### Build Demo
 
-Build the production version:
+Build the demo application for production:
 
 ```bash
+cd demo
 npm run build
 # or
 yarn build
 # or
 pnpm build
+# or
+bun run build
 ```
 
 ### Start Production Server
@@ -80,6 +107,8 @@ npm start
 yarn start
 # or
 pnpm start
+# or
+bun start
 ```
 
 ## Accessing Wallet Connection State
@@ -117,6 +146,8 @@ npm install @chia/wallet-connect
 yarn add @chia/wallet-connect
 # or
 pnpm add @chia/wallet-connect
+# or
+bun add @chia/wallet-connect
 ```
 
 ### Setup
